@@ -91,7 +91,7 @@ defmodule PupWatchWeb.RecordingsLive do
   def handle_info(%Phoenix.Socket.Broadcast{event: "destroy", payload: %{data: rec}}, socket),
     do: {:noreply, socket |> stream_delete(:recordings, rec) |> load_storage()}
 
-  def handle_info(%Phoenix.Socket.Broadcast{event: "create", payload: %{data: rec}}, socket),
+  def handle_info(%Phoenix.Socket.Broadcast{event: "start", payload: %{data: rec}}, socket),
     do: {:noreply, socket |> assign(empty?: false) |> stream_insert(:recordings, rec, at: 0)}
 
   def handle_info(%Phoenix.Socket.Broadcast{payload: %{data: rec}}, socket),

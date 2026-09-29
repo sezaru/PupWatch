@@ -37,6 +37,19 @@ defmodule PupWatch.RetentionTest do
     assert Monitor.storage_used_bytes() <= 1_000_000_000
   end
 
+  test "a recording finishing triggers retention without being asked" do
+    Monitor.update_settings!(Monitor.settings!(), %{max_storage_gb: 1})
+    start_supervised!({Retention, name: :test_retention})
+    base = ~U[2026-09-29 10:00:00.000000Z]
+    old = sized_recording(base, 700_000_000)
+    new = sized_recording(DateTime.add(base, 60), 700_000_000)
+
+    # a synchronous call queues behind the finish notifications already in its mailbox
+    :sys.get_state(:test_retention)
+    assert Enum.map(Monitor.recording_history!(), & &1.id) == [new.id]
+    refute File.exists?(Storage.path(old.clip_path))
+  end
+
   test "recordings from before sizes were tracked get measured at start" do
     rec = Monitor.start_recording!(%{started_at: DateTime.utc_now()})
     File.write!(Storage.path(rec.clip_path), "12345")

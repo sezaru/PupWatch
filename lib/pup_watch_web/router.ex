@@ -24,10 +24,11 @@ defmodule PupWatchWeb.Router do
     get "/thumbs/:id", ClipController, :thumb
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", PupWatchWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", PupWatchWeb.Api do
+    pipe_through :api
+
+    get "/events", EventsController, :stream
+  end
 
   # Enable LiveDashboard in development
   if Application.compile_env(:pup_watch, :dev_routes) do

@@ -37,11 +37,12 @@ defmodule PupWatch.Retention do
   def handle_call(:enforce, _from, s), do: {:reply, run(), s}
 
   @impl true
+  # Events are named after the Ash action (finish, fail, measure...), so key on the data.
   def handle_info(
-        %Phoenix.Socket.Broadcast{event: "update", payload: %{data: %{status: status}}},
+        %Phoenix.Socket.Broadcast{event: event, payload: %{data: %{status: status}}},
         s
       )
-      when status != :recording,
+      when event != "destroy" and status != :recording,
       do: {:noreply, tap(s, fn _ -> run() end)}
 
   def handle_info(%Phoenix.Socket.Broadcast{topic: "settings:changed"}, s),

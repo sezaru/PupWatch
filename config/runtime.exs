@@ -40,63 +40,46 @@ if config_env() == :dev do
     ]
 end
 
+if host = System.get_env("CAMERA_HOST") do
+  if password = System.get_env("TAPO_CLOUD_PASSWORD") do
+    # the camera checks this locally; it never needs to reach TP-Link
+    config :pup_watch, :tapo, host: host, password: password
+  end
+
+  # the Tapo "camera account" -- the same one RTSP uses
+  config :pup_watch, :onvif,
+    url: "http://#{host}:#{System.get_env("ONVIF_PORT", "2020")}/onvif/service",
+    username: System.fetch_env!("CAMERA_USER"),
+    password: System.fetch_env!("CAMERA_PASSWORD")
+end
+
+if url = System.get_env("GO2RTC_URL") do
+  config :pup_watch,
+         :camera,
+         Keyword.merge(Application.get_env(:pup_watch, :camera, []), go2rtc_url: url)
+end
+
 if config_env() == :prod do
-  # The secret key base is used to sign/encrypt cookies and other secrets.
-  # A default value is used in config/dev.exs and config/test.exs but you
-  # want to use a different value for prod and you most likely don't want
-  # to check this value into version control, so we use an environment
-  # variable instead.
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
-      raise """
-      environment variable SECRET_KEY_BASE is missing.
-      You can generate one by calling: mix phx.gen.secret
-      """
+      raise "environment variable SECRET_KEY_BASE is missing (mix phx.gen.secret)"
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  storage = System.get_env("PUPWATCH_STORAGE") || raise "PUPWATCH_STORAGE is missing"
 
-  config :pup_watch, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+  config :pup_watch, :storage_root, storage
+
+  config :pup_watch, PupWatch.Repo,
+    database: Path.join(storage, "pupwatch.db"),
+    pool_size: 5
+
+  host = System.get_env("PHX_HOST") || "localhost"
+  extra_hosts = String.split(System.get_env("PHX_EXTRA_HOSTS", ""), ",", trim: true)
 
   config :pup_watch, PupWatchWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
-    http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
-      # See the documentation on https://bandit.hexdocs.pm/Bandit.html#t:options/0
-      # for details about using IPv6 vs IPv4 and loopback vs public addresses.
-      ip: {0, 0, 0, 0, 0, 0, 0, 0}
-    ],
+    url: [host: host, scheme: "https", port: 443],
+    http: [ip: {0, 0, 0, 0, 0, 0, 0, 0}],
+    # TLS ends at the proxy, so the origin can't be compared with the (http) conn;
+    # "//host" accepts any scheme and port, which also covers direct LAN access.
+    check_origin: Enum.map([host | extra_hosts], &("//" <> &1)),
     secret_key_base: secret_key_base
-
-  # ## SSL Support
-  #
-  # To get SSL working, you will need to add the `https` key
-  # to your endpoint configuration:
-  #
-  #     config :pup_watch, PupWatchWeb.Endpoint,
-  #       https: [
-  #         ...,
-  #         port: 443,
-  #         cipher_suite: :strong,
-  #         keyfile: System.get_env("SOME_APP_SSL_KEY_PATH"),
-  #         certfile: System.get_env("SOME_APP_SSL_CERT_PATH")
-  #       ]
-  #
-  # The `cipher_suite` is set to `:strong` to support only the
-  # latest and more secure SSL ciphers. This means old browsers
-  # and clients may not be supported. You can set it to
-  # `:compatible` for wider support.
-  #
-  # `:keyfile` and `:certfile` expect an absolute path to the key
-  # and cert in disk or a relative path inside priv, for example
-  # "priv/ssl/server.key". For all supported SSL configuration
-  # options, see https://plug.hexdocs.pm/Plug.SSL.html#configure/1
-  #
-  # We also recommend setting `force_ssl` in your config/prod.exs,
-  # ensuring no data is ever sent via http, always redirecting to https:
-  #
-  #     config :pup_watch, PupWatchWeb.Endpoint,
-  #       force_ssl: [hsts: true]
-  #
-  # Check `Plug.SSL` for all available options in `force_ssl`.
 end

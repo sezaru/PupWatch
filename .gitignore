@@ -45,3 +45,7 @@ npm-debug.log
 # devenv / direnv local state
 .devenv/
 .direnv/
+/pupwatch_*.db*
+/.nix-mix
+/.nix-hex
+/.env.snorlax

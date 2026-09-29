@@ -10,10 +10,10 @@ defmodule PupWatch.Application do
     children = [
       PupWatchWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:pup_watch, :dns_cluster_query) || :ignore},
+      PupWatch.Repo,
+      PupWatch.Tapo.Client,
       {Phoenix.PubSub, name: PupWatch.PubSub},
-      # Start a worker by calling: PupWatch.Worker.start_link(arg)
-      # {PupWatch.Worker, arg},
-      # Start to serve requests, typically the last entry
+      PupWatch.Pipeline,
       PupWatchWeb.Endpoint
     ]
 

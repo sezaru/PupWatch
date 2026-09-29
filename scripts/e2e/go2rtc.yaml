@@ -1,0 +1,10 @@
+api:
+  listen: 127.0.0.1:1984
+rtsp:
+  listen: 127.0.0.1:8554
+webrtc:
+  listen: 127.0.0.1:8555
+  candidates: [127.0.0.1:8555]
+streams:
+  tapo: exec:ffmpeg -hide_banner -loglevel error -re -stream_loop -1 -i tmp/fixtures/e2e.mkv -c:v copy -c:a copy -rtsp_transport tcp -f rtsp {output}
+  tapo_sub: exec:ffmpeg -hide_banner -loglevel error -re -stream_loop -1 -i tmp/fixtures/e2e.mkv -c:v copy -an -rtsp_transport tcp -f rtsp {output}

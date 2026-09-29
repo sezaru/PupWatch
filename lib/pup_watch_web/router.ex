@@ -17,7 +17,11 @@ defmodule PupWatchWeb.Router do
   scope "/", PupWatchWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", LiveLive
+    live "/recordings", RecordingsLive
+    get "/live.mp4", LiveStreamController, :show
+    get "/clips/:id", ClipController, :clip
+    get "/thumbs/:id", ClipController, :thumb
   end
 
   # Other scopes may use custom stacks.

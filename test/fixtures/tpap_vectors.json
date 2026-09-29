@@ -1,0 +1,37 @@
+{
+ "crypt": [
+  [
+   "Hello world!",
+   "$5$saltstring",
+   "$5$saltstring$5B8vYYiY.CVt1RlTTf8KbXBH3hsxY/GNooZaBBGWEc5"
+  ],
+  [
+   "0192023a7bbd73250516f069df18b500",
+   "$5$rounds=1000$abcdefghijklmnopqrstu",
+   "$5$rounds=1000$abcdefghijklmnop$hOqG69KvlZkm.WHTiCmP9eMNt8Ou2rE4phat5Jd8HC8"
+  ],
+  [
+   "x",
+   "$5$ab",
+   "$5$ab$5ydlOaPxAq0VpamGFK.BZgHF7HlR0erJsH.F7VB19f0"
+  ]
+ ],
+ "extra_sha1": "1a91d62f7ca67399625a4368a6ab5d4a3baa6073",
+ "spake": {
+  "register": {
+   "dev_salt": "c2FsdHNhbHRzYWx0c2FsdA==",
+   "iterations": 1000,
+   "dev_share": "BEccPnWMSQQoW7p+UxGO0PUkresHV9Jb0vjnsNdt+nFM3VIPesqKi5F6zDf1HejwybvjrYWDgucC3CWhLQn3qFg=",
+   "dev_random": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
+  },
+  "user_random": "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=",
+  "credential": "credential",
+  "scalar": 3735928559,
+  "user_share": "BMUhyMcS/Xfe61RzQ69UCQWImLzbk61ACiXTGYohGzfF0mPO+Y1M2GWXhN+SGdnahMJgkrx1XS/LUOBqFCAAeuI=",
+  "user_confirm": "Y6mlFhegxNoh1LlNSyf3mKWfhLZM8I0iMVcTKGVFbGw=",
+  "shared_key": "b6eecc8ce8cfc6bd44661caba618f9caa9e06c19cb0fa273ab0b41b2bca58b2d",
+  "key": "cf4f2fb40d9a06c90998cd50e842e231",
+  "nonce": "810e916af60f4b089d9bdc3e",
+  "dev_confirm": "FSSPX73jg5otutqZgsmhDw5Lpk3e8RNW1YmK8yaEDj4="
+ }
+}

@@ -20,3 +20,11 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+config :pup_watch, PupWatch.Repo,
+  database: Path.expand("../pupwatch_test.db", __DIR__),
+  pool_size: 5,
+  pool: Ecto.Adapters.SQL.Sandbox
+
+config :pup_watch, :storage_root, Path.expand("../tmp/test_storage", __DIR__)
+config :pup_watch, :pipeline, false

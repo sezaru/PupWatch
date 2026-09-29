@@ -68,8 +68,14 @@ defmodule PupWatch.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:evision, "~> 0.2"},
-      {:nx, "~> 0.7"}
+      {:evision, "~> 0.2.17"},
+      {:nx, "~> 0.7"},
+      {:ash, "~> 3.33"},
+      {:ash_sqlite, "~> 0.2.19"},
+      {:ash_phoenix, "~> 2.3"},
+      {:req, "~> 0.7"},
+      {:tz, "~> 0.28"},
+      {:igniter, "~> 0.6", only: [:dev, :test]}
     ]
   end
 
@@ -81,7 +87,8 @@ defmodule PupWatch.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "assets.setup", "assets.build"],
+      setup: ["deps.get", "ash.setup", "assets.setup", "assets.build"],
+      test: ["ash.setup --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["compile", "tailwind pup_watch", "esbuild pup_watch"],
       "assets.deploy": [

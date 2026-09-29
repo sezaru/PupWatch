@@ -62,3 +62,9 @@ config :phoenix_live_view,
   debug_attributes: true,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
+
+config :pup_watch, PupWatch.Repo,
+  database: Path.expand("../pupwatch_dev.db", __DIR__),
+  pool_size: 5
+
+config :pup_watch, :storage_root, Path.expand("../tmp/storage", __DIR__)

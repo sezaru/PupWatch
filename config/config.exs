@@ -8,7 +8,27 @@
 import Config
 
 config :pup_watch,
+  ecto_repos: [PupWatch.Repo],
+  ash_domains: [PupWatch.Monitor],
   generators: [timestamp_type: :utc_datetime]
+
+config :pup_watch, :camera,
+  detect_source: "rtsp://127.0.0.1:8554/tapo_sub",
+  record_source: "rtsp://127.0.0.1:8554/tapo",
+  go2rtc_url: "http://127.0.0.1:1984",
+  go2rtc_stream: "tapo",
+  go2rtc_mp4_stream: "tapo_mp4",
+  detect_size: {640, 360},
+  detect_fps: 3
+
+config :pup_watch, :pipeline, true
+config :pup_watch, :time_zone, "America/Sao_Paulo"
+config :elixir, :time_zone_database, Tz.TimeZoneDatabase
+
+config :ash, default_string_length_count: :codepoints
+
+config :spark,
+  formatter: [remove_parens?: true, "Ash.Resource": [], "Ash.Domain": []]
 
 # Configure the endpoint
 config :pup_watch, PupWatchWeb.Endpoint,
@@ -29,6 +49,8 @@ config :phoenix_live_view,
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",
+  path: System.get_env("MIX_ESBUILD_PATH"),
+  version_check: false,
   pup_watch: [
     args:
       ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --alias:@=.),
@@ -39,6 +61,8 @@ config :esbuild,
 # Configure tailwind (the version is required)
 config :tailwind,
   version: "4.3.0",
+  path: System.get_env("MIX_TAILWIND_PATH"),
+  version_check: false,
   pup_watch: [
     args: ~w(
       --input=assets/css/app.css

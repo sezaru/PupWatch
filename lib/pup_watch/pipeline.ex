@@ -19,7 +19,8 @@ defmodule PupWatch.Pipeline do
          size: cam[:detect_size],
          fps: cam[:detect_fps],
          sink: Detector},
-        {PupWatch.Recorder, source: cam[:record_source]}
+        {PupWatch.Recorder, source: cam[:record_source]},
+        PupWatch.Retention
       ]
 
       Supervisor.init(children, strategy: :one_for_one)

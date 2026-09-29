@@ -41,6 +41,18 @@ defmodule PupWatch.Camera.FeaturesTest do
            %{method: "getLedStatus"} ->
              %{"error_code" => 0, "result" => %{"led" => %{"config" => %{"enabled" => "off"}}}}
 
+           %{method: "getAudioConfig", params: %{audio_config: %{name: ["speaker"]}}} ->
+             %{
+               "error_code" => 0,
+               "result" => %{"audio_config" => %{"speaker" => %{"volume" => "70"}}}
+             }
+
+           %{method: "getAudioConfig"} ->
+             %{
+               "error_code" => 0,
+               "result" => %{"audio_config" => %{"microphone" => %{"volume" => "100"}}}
+             }
+
            %{method: "getLightFrequencyInfo"} ->
              %{
                "error_code" => 0,
@@ -56,6 +68,8 @@ defmodule PupWatch.Camera.FeaturesTest do
     assert settings.auto_track == true
     assert settings.led == false
     assert settings.night_vision == "auto"
+    assert settings.speaker_volume == 70
+    assert settings.mic_volume == 100
     assert settings.pet_detection == :unsupported
     # the read answers, but without the msgAlarm module the camera can't act on it
     assert settings.alarm == :unsupported
@@ -96,6 +110,8 @@ defmodule PupWatch.Camera.FeaturesTest do
 
     assert :ok = Features.set(cam, :auto_track, true)
     assert :ok = Features.set(cam, :night_vision, "off")
+    assert :ok = Features.set(cam, :speaker_volume, 40)
+    assert {:error, {:invalid_setting, :mic_volume, 140}} = Features.set(cam, :mic_volume, 140)
 
     assert {:error, {:invalid_setting, :night_vision, "dim"}} =
              Features.set(cam, :night_vision, "dim")
@@ -105,7 +121,11 @@ defmodule PupWatch.Camera.FeaturesTest do
                method: "setTargetTrackConfig",
                params: %{"target_track" => %{"target_track_info" => %{enabled: "on"}}}
              },
-             %{method: "setDayNightModeConfig", params: %{image: %{common: %{inf_type: "off"}}}}
+             %{method: "setDayNightModeConfig", params: %{image: %{common: %{inf_type: "off"}}}},
+             %{
+               method: "setSpeakerVolume",
+               params: %{audio_config: %{"speaker" => %{volume: "40"}}}
+             }
            ] = GenServer.call(cam, :seen)
   end
 

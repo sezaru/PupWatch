@@ -13,8 +13,9 @@ defmodule PupWatch.Application do
       PupWatch.Repo,
       PupWatch.Tapo.Client,
       {Phoenix.PubSub, name: PupWatch.PubSub},
-      PupWatch.Pipeline,
-      PupWatchWeb.Endpoint
+      PupWatchWeb.Endpoint,
+      # after the endpoint: Ash notifications are broadcast through it
+      PupWatch.Pipeline
     ]
 
     # See https://elixir.hexdocs.pm/Supervisor.html

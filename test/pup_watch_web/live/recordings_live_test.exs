@@ -57,4 +57,16 @@ defmodule PupWatchWeb.RecordingsLiveTest do
 
     assert build_conn() |> get(~p"/clips/#{Ecto.UUID.generate()}") |> response(404)
   end
+
+  test "shows storage use and saves the limit", %{conn: conn} do
+    {:ok, view, html} = live(conn, ~p"/recordings")
+    assert html =~ "0.0 GB of 20 GB used"
+
+    html = view |> form("#storage-limit", %{max_storage_gb: "5"}) |> render_submit()
+    assert html =~ "of 5 GB used"
+    assert Monitor.settings!().max_storage_gb == 5
+
+    html = view |> form("#storage-limit", %{max_storage_gb: "0"}) |> render_submit()
+    assert html =~ "at least 1"
+  end
 end

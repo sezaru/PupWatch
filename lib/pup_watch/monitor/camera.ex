@@ -32,11 +32,17 @@ defmodule PupWatch.Monitor.Camera do
 
     action :set_setting, :atom do
       argument :name, :atom, allow_nil?: false, constraints: [one_of: Features.names()]
-      # "true"/"false" for toggles, a mode for night vision
+      # "true"/"false" for toggles, a mode for night vision, 0-100 for volumes
       argument :value, :string, allow_nil?: false
 
       run fn %{arguments: %{name: name, value: value}}, _ ->
-        value = if value in ~w(true false), do: value == "true", else: value
+        value =
+          cond do
+            value in ~w(true false) -> value == "true"
+            match?({_, ""}, Integer.parse(value)) -> String.to_integer(value)
+            true -> value
+          end
+
         with :ok <- Features.set(name, value), do: {:ok, name}
       end
     end

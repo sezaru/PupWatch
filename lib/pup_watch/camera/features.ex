@@ -21,7 +21,12 @@ defmodule PupWatch.Camera.Features do
     params: %{app_component: %{name: "app_component_list"}}
   }
 
-  def names, do: Map.keys(@toggles) ++ [:led, :night_vision, :alarm]
+  @volumes %{
+    speaker_volume: {"speaker", "setSpeakerVolume"},
+    mic_volume: {"microphone", "setMicrophoneVolume"}
+  }
+
+  def names, do: Map.keys(@toggles) ++ [:led, :night_vision, :alarm] ++ Map.keys(@volumes)
 
   @doc """
   Every setting in one round-trip; the ones this camera lacks come back `:unsupported`.
@@ -83,6 +88,11 @@ defmodule PupWatch.Camera.Features do
   defp read(:night_vision),
     do: %{method: "getLightFrequencyInfo", params: %{image: %{name: "common"}}}
 
+  defp read(name) when is_map_key(@volumes, name) do
+    {key, _} = @volumes[name]
+    %{method: "getAudioConfig", params: %{audio_config: %{name: [key]}}}
+  end
+
   defp read(:alarm),
     do: %{method: "getLastAlarmInfo", params: %{msg_alarm: %{name: ["chn1_msg_alarm_info"]}}}
 
@@ -96,6 +106,12 @@ defmodule PupWatch.Camera.Features do
 
   defp write(:night_vision, mode, _server) when mode in @night_modes,
     do: {:ok, %{method: "setDayNightModeConfig", params: %{image: %{common: %{inf_type: mode}}}}}
+
+  defp write(name, volume, _server)
+       when is_map_key(@volumes, name) and is_integer(volume) and volume in 0..100 do
+    {key, method} = @volumes[name]
+    {:ok, %{method: method, params: %{audio_config: %{key => %{volume: to_string(volume)}}}}}
+  end
 
   # Keep the camera's own sound/light choice; only flip enabled.
   defp write(:alarm, on?, server) when is_boolean(on?) do
@@ -127,19 +143,37 @@ defmodule PupWatch.Camera.Features do
   defp parse(name, %{"error_code" => 0, "result" => result}) do
     value =
       case name do
-        :led -> get_in(result, ["led", "config", "enabled"])
-        :night_vision -> get_in(result, ["image", "common", "inf_type"])
-        :alarm -> get_in(result, ["msg_alarm", "chn1_msg_alarm_info", "enabled"])
-        _ -> with({_, root, key} <- @toggles[name], do: get_in(result, [root, key, "enabled"]))
+        :led ->
+          get_in(result, ["led", "config", "enabled"])
+
+        :night_vision ->
+          get_in(result, ["image", "common", "inf_type"])
+
+        :alarm ->
+          get_in(result, ["msg_alarm", "chn1_msg_alarm_info", "enabled"])
+
+        name when is_map_key(@volumes, name) ->
+          get_in(result, ["audio_config", elem(@volumes[name], 0), "volume"])
+
+        _ ->
+          with({_, root, key} <- @toggles[name], do: get_in(result, [root, key, "enabled"]))
       end
 
     case value do
       "on" -> true
       "off" -> false
       mode when name == :night_vision and mode in @night_modes -> mode
+      volume when is_map_key(@volumes, name) and is_binary(volume) -> parse_volume(volume)
       _ -> :unsupported
     end
   end
 
   defp parse(_name, _response), do: :unsupported
+
+  defp parse_volume(volume) do
+    case Integer.parse(volume) do
+      {n, ""} -> n
+      _ -> :unsupported
+    end
+  end
 end

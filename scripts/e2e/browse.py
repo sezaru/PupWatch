@@ -13,6 +13,8 @@ with sync_playwright() as p:
     print("video playing:", page.evaluate("[document.querySelector('#live-video video').videoWidth, document.querySelector('#live-video video').videoHeight]"))
     page.wait_for_selector("text=Dog detected", timeout=30000)
     print("badge: dog detected")
+    page.wait_for_function("[...document.querySelectorAll('#live-video div.border-warning')].some(b => !b.hidden)", timeout=10000)
+    print("box:", page.evaluate("(() => { const b = [...document.querySelectorAll('#live-video div.border-warning')].find(b => !b.hidden); return b.style.cssText })()"))
     page.screenshot(path="tmp/e2e-live-dog.png")
     page.wait_for_selector("text=Watching", timeout=40000)
     page.wait_for_selector("section img[src^='/thumbs/']", timeout=10000)

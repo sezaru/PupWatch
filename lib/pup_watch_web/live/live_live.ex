@@ -60,7 +60,13 @@ defmodule PupWatchWeb.LiveLive do
         %{assigns: %{settings: %{}}} = socket
       ) do
     name = String.to_existing_atom(name)
-    shown = if value in ~w(true false), do: value == "true", else: value
+
+    shown =
+      cond do
+        value in ~w(true false) -> value == "true"
+        match?({_, ""}, Integer.parse(value)) -> String.to_integer(value)
+        true -> value
+      end
 
     {:noreply,
      socket
@@ -69,6 +75,10 @@ defmodule PupWatchWeb.LiveLive do
   end
 
   def handle_event("setting", _, socket), do: {:noreply, socket}
+
+  def handle_event("volume", %{"_target" => [key]} = params, socket)
+      when key in ~w(speaker_volume mic_volume),
+      do: handle_event("setting", %{"name" => key, "to" => params[key]}, socket)
 
   def handle_event("siren", _, socket) do
     action = if socket.assigns.siren, do: :stop, else: :start
@@ -117,33 +127,36 @@ defmodule PupWatchWeb.LiveLive do
   def handle_async(:settings, {:ok, settings}, socket),
     do: {:noreply, assign(socket, settings: settings)}
 
-  def handle_async(:settings, {:exit, reason}, socket),
-    do:
-      {:noreply,
-       socket
-       |> assign(settings: :error)
-       |> put_flash(:error, "Camera settings unavailable: #{inspect(reason)}")}
+  def handle_async(:settings, {:exit, reason}, socket) do
+    Logger.warning("camera settings: #{inspect(reason)}")
+    {:noreply, assign(socket, settings: :error)}
+  end
 
   def handle_async({:set, _name}, {:ok, {:ok, _}}, socket), do: {:noreply, socket}
 
   # Roll the optimistic change back to what the camera actually has.
   def handle_async({:set, name}, result, socket) do
+    Logger.warning("camera setting #{name}: #{inspect(result)}")
+
     {:noreply,
      socket
-     |> put_flash(:error, "Couldn't change #{label(name)}: #{inspect(result)}")
+     |> put_flash(:error, "The camera didn't accept the #{label(name)} change.")
      |> load_settings()}
   end
 
   def handle_async(:siren, {:ok, {:ok, _}}, socket), do: {:noreply, socket}
 
-  def handle_async(:siren, result, socket),
-    do:
-      {:noreply,
-       socket |> assign(siren: false) |> put_flash(:error, "Siren failed: #{inspect(result)}")}
+  def handle_async(:siren, result, socket) do
+    Logger.warning("camera siren: #{inspect(result)}")
+    {:noreply, socket |> assign(siren: false) |> put_flash(:error, "The siren didn't respond.")}
+  end
 
   @impl true
   def handle_info({:status, status}, socket),
     do: {:noreply, assign(socket, status: status, since: DateTime.utc_now())}
+
+  def handle_info({:detection, box}, socket),
+    do: {:noreply, push_event(socket, "detection", %{box: box})}
 
   def handle_info(%Phoenix.Socket.Broadcast{topic: "recordings:all"}, socket),
     do: {:noreply, load_recent(socket)}

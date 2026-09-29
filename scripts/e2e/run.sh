@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # On snorlax, inside in-shell.sh: fake camera via go2rtc + dev server + headless browser.
 set -euo pipefail
+# own ports: a deployed go2rtc may already hold the default ones
+export GO2RTC_URL=http://127.0.0.1:11984 GO2RTC_RTSP=rtsp://127.0.0.1:18554 PORT=4000
+unset CAMERA_HOST TAPO_CLOUD_PASSWORD
 [ -f tmp/fixtures/e2e.mkv ] || { mkdir -p tmp/fixtures; ffmpeg -loglevel error -y -f lavfi -i color=gray:s=1280x720:d=3:r=15 -loop 1 -t 4 -framerate 15 -i test/fixtures/dog.jpg -f lavfi -i color=gray:s=1280x720:d=20:r=15 -f lavfi -t 27 -i anullsrc=r=8000:cl=mono -filter_complex "[1]scale=1280:720,setsar=1[d];[0][d][2]concat=n=3:v=1[v]" -map "[v]" -map 3:a -c:v libx264 -pix_fmt yuv420p -g 15 -c:a pcm_alaw tmp/fixtures/e2e.mkv; }
 rm -f pupwatch_dev.db*; rm -rf tmp/storage
 mix ash.setup --quiet >/dev/null

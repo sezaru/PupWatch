@@ -39,13 +39,23 @@ defmodule PupWatch.Monitor.Recording do
 
     update :finish do
       accept [:peak_confidence]
+      require_atomic? false
       change set_attribute(:status, :complete)
       change set_attribute(:ended_at, &DateTime.utc_now/0)
+      change PupWatch.Monitor.Recording.MeasureSize
     end
 
     update :fail do
+      require_atomic? false
       change set_attribute(:status, :failed)
       change set_attribute(:ended_at, &DateTime.utc_now/0)
+      change PupWatch.Monitor.Recording.MeasureSize
+    end
+
+    # recordings made before sizes were tracked
+    update :measure do
+      require_atomic? false
+      change PupWatch.Monitor.Recording.MeasureSize
     end
 
     read :history do
@@ -55,6 +65,15 @@ defmodule PupWatch.Monitor.Recording do
 
     read :in_progress do
       filter expr(status == :recording)
+    end
+
+    read :oldest_finished do
+      filter expr(status != :recording)
+      prepare build(sort: [started_at: :asc])
+    end
+
+    read :unmeasured do
+      filter expr(status != :recording and is_nil(size_bytes))
     end
 
     destroy :destroy do
@@ -85,6 +104,8 @@ defmodule PupWatch.Monitor.Recording do
     attribute :clip_path, :string, allow_nil?: false, public?: true
     attribute :thumbnail_path, :string, allow_nil?: false, public?: true
     attribute :peak_confidence, :float, default: 0.0, allow_nil?: false, public?: true
+    # clip + thumbnail, set once the recording ends
+    attribute :size_bytes, :integer, public?: true
   end
 
   calculations do

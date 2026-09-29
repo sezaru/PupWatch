@@ -1,12 +1,14 @@
 defmodule PupWatch.Detection.Detector do
   @moduledoc """
-  Runs YOLOX on frames from the FrameReader and publishes on PubSub "detector":
-  `{:dog_arrived, %{score, thumbnail}}`, `{:dog_left, peak}`, `{:status, status}`.
+  Runs YOLOX on frames from the FrameReader, gated by cheap motion detection, and
+  publishes on PubSub "detector": `{:dog_arrived, %{score, thumbnail}}`,
+  `{:dog_left, peak}`, `{:status, status}` and `{:detection, box | nil}` with the
+  box as `[x, y, w, h]` fractions of the frame.
   """
   use GenServer
   require Logger
 
-  alias PupWatch.Detection.{Presence, Yolox}
+  alias PupWatch.Detection.{Gate, Motion, Presence, Yolox}
 
   @topic "detector"
 
@@ -24,6 +26,9 @@ defmodule PupWatch.Detection.Detector do
   @impl true
   def init(opts) do
     presence_opts = Keyword.get(opts, :presence, [])
+    # OpenCV's default pool (one thread per core) mostly spins between frames:
+    # ~2 cores at 3 fps, against ~0.2 of one core single-threaded.
+    Evision.setNumThreads(1)
 
     {:ok,
      %{
@@ -31,6 +36,9 @@ defmodule PupWatch.Detection.Detector do
        threshold: Keyword.get(opts, :threshold, 0.5),
        presence: Presence.new(presence_opts),
        presence_opts: presence_opts,
+       gate: Gate.new(Keyword.get(opts, :gate, [])),
+       prev_signature: nil,
+       last_box: nil,
        status: :offline,
        since: DateTime.utc_now()
      }}
@@ -46,7 +54,8 @@ defmodule PupWatch.Detection.Detector do
   def handle_info(:stream_down, s) do
     {presence, event} = Presence.reset(s.presence)
     publish(event)
-    {:noreply, set_status(%{s | presence: presence}, :offline)}
+    s = publish_box(s, nil)
+    {:noreply, set_status(%{s | presence: presence, prev_signature: nil}, :offline)}
   end
 
   defp latest(frame) do
@@ -59,7 +68,20 @@ defmodule PupWatch.Detection.Detector do
 
   defp process({:frame, bin, {w, h}, ts}, s) do
     mat = Evision.Mat.from_binary(bin, {:u, 8}, h, w, 3)
+    signature = Motion.signature(mat)
+
+    changed =
+      if s.prev_signature, do: Motion.changed_fraction(s.prev_signature, signature), else: 1.0
+
+    {run?, gate} = Gate.decide(s.gate, ts, changed, s.presence.phase == :present)
+    s = %{s | gate: gate, prev_signature: signature}
+
+    if run?, do: detect(mat, {w, h}, ts, s), else: s
+  end
+
+  defp detect(mat, size, ts, s) do
     best = s.net |> Yolox.detect(mat, threshold: s.threshold) |> List.first()
+    s = publish_box(s, best && normalize(best.box, size))
     {presence, event} = Presence.step(s.presence, ts, best)
 
     case event do
@@ -74,6 +96,16 @@ defmodule PupWatch.Detection.Detector do
       nil ->
         %{s | presence: presence}
     end
+  end
+
+  defp normalize({x, y, bw, bh}, {w, h}),
+    do: Enum.map([x / w, y / h, bw / w, bh / h], &Float.round(&1 / 1, 4))
+
+  defp publish_box(%{last_box: nil} = s, nil), do: s
+
+  defp publish_box(s, box) do
+    publish({:detection, box})
+    %{s | last_box: box}
   end
 
   defp thumbnail(mat, %{box: {x, y, w, h}, score: score}) do

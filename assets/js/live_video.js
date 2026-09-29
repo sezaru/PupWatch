@@ -22,6 +22,9 @@ export const LiveVideo = {
     }
     this.talkBtn.addEventListener("contextmenu", e => e.preventDefault())
 
+    this.setupOverlay()
+    this.handleEvent("detection", ({box}) => this.drawBox(box))
+
     this.connect()
 
     if (new URLSearchParams(location.search).has("debug")) {
@@ -46,6 +49,8 @@ export const LiveVideo = {
   },
 
   destroyed() {
+    this.resizeObserver?.disconnect()
+    clearTimeout(this.boxTimer)
     this.closed = true
     clearTimeout(this.retry)
     clearTimeout(this.fallbackTimer)
@@ -110,6 +115,45 @@ export const LiveVideo = {
       this.connecting.hidden = false
       setTimeout(() => { this.video.src = "/live.mp4" }, RETRY_MS)
     }
+  },
+
+  // Boxes arrive as [x, y, w, h] fractions of the frame; the video is letterboxed
+  // (object-contain), so the overlay tracks the rectangle the picture really fills.
+  setupOverlay() {
+    this.overlay = document.createElement("div")
+    this.overlay.className = "absolute pointer-events-none"
+    this.box = document.createElement("div")
+    this.box.className = "absolute border-2 border-warning rounded-sm shadow-[0_0_0_1px_rgba(0,0,0,.5)] transition-all duration-300 ease-linear"
+    this.box.hidden = true
+    this.overlay.appendChild(this.box)
+    this.el.appendChild(this.overlay)
+    this.resizeObserver = new ResizeObserver(() => this.fitOverlay())
+    this.resizeObserver.observe(this.video)
+    this.video.addEventListener("loadedmetadata", () => this.fitOverlay())
+  },
+
+  fitOverlay() {
+    const {clientWidth: cw, clientHeight: ch, videoWidth: vw, videoHeight: vh} = this.video
+    if (!vw || !vh) return
+    const scale = Math.min(cw / vw, ch / vh)
+    const w = vw * scale, h = vh * scale
+    Object.assign(this.overlay.style, {
+      left: `${this.video.offsetLeft + (cw - w) / 2}px`,
+      top: `${this.video.offsetTop + (ch - h) / 2}px`,
+      width: `${w}px`,
+      height: `${h}px`,
+    })
+  },
+
+  drawBox(box) {
+    clearTimeout(this.boxTimer)
+    if (!box) { this.box.hidden = true; return }
+    this.fitOverlay()
+    const [x, y, w, h] = box.map(v => `${(v * 100).toFixed(2)}%`)
+    Object.assign(this.box.style, {left: x, top: y, width: w, height: h})
+    this.box.hidden = false
+    // the detector only reports changes, so a silent stream shouldn't leave a stale box
+    this.boxTimer = setTimeout(() => { this.box.hidden = true }, 4000)
   },
 
   scheduleRetry() {

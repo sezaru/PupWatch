@@ -32,4 +32,23 @@ defmodule PupWatchWeb.LiveLiveTest do
     refute html =~ "phx-value-value"
     refute html =~ "Siren"
   end
+
+  test "detections are pushed to the video hook", %{conn: conn} do
+    {:ok, view, _} = live(conn, ~p"/")
+    send(view.pid, {:detection, [0.1, 0.2, 0.3, 0.4]})
+    assert_push_event(view, "detection", %{box: [0.1, 0.2, 0.3, 0.4]})
+    send(view.pid, {:detection, nil})
+    assert_push_event(view, "detection", %{box: nil})
+  end
+
+  test "volume sliders render from the camera's values" do
+    html =
+      render_component(&CameraComponents.camera_settings/1,
+        settings: %{mic_volume: 100, speaker_volume: 70},
+        siren: false
+      )
+
+    assert html =~ ~r/name="speaker_volume"[^>]*value="70"/s
+    assert html =~ ~r/name="mic_volume"[^>]*value="100"/s
+  end
 end

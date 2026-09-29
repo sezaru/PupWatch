@@ -56,10 +56,16 @@ if host do
     password: System.fetch_env!("CAMERA_PASSWORD")
 end
 
+if rtsp = System.get_env("GO2RTC_RTSP") do
+  # config/3 deep-merges keyword lists; re-reading Application.get_env here would
+  # clobber keys set by another block
+  config :pup_watch, :camera,
+    detect_source: "#{rtsp}/tapo_sub",
+    record_source: "#{rtsp}/tapo"
+end
+
 if url = System.get_env("GO2RTC_URL") do
-  config :pup_watch,
-         :camera,
-         Keyword.merge(Application.get_env(:pup_watch, :camera, []), go2rtc_url: url)
+  config :pup_watch, :camera, go2rtc_url: url
 end
 
 if config_env() == :prod do

@@ -11,14 +11,18 @@ defmodule PupWatchWeb.CameraComponents do
     pet_detection: "Camera pet alerts"
   ]
 
+  @volumes [mic_volume: "Microphone", speaker_volume: "Speaker (talk)"]
+
   def label(:night_vision), do: "night vision"
+  def label(:mic_volume), do: "microphone volume"
+  def label(:speaker_volume), do: "speaker volume"
   def label(name), do: @toggles |> Keyword.fetch!(name) |> String.downcase()
 
   attr :settings, :any, required: true
   attr :siren, :boolean, required: true
 
   def camera_settings(assigns) do
-    assigns = assign(assigns, toggles: @toggles)
+    assigns = assign(assigns, toggles: @toggles, volumes: @volumes)
 
     ~H"""
     <section class="card bg-base-200">
@@ -79,6 +83,31 @@ defmodule PupWatchWeb.CameraComponents do
             </div>
           </div>
         </div>
+        <form
+          :if={is_map(@settings) and Enum.any?(@volumes, fn {n, _} -> is_integer(@settings[n]) end)}
+          id="camera-volumes"
+          phx-change="volume"
+          class="grid sm:grid-cols-2 gap-x-6 gap-y-2"
+        >
+          <label
+            :for={{name, text} <- @volumes}
+            :if={is_integer(@settings[name])}
+            class="flex items-center gap-3"
+          >
+            <span class="text-sm w-28 shrink-0">{text}</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              name={name}
+              value={@settings[name]}
+              phx-debounce="400"
+              class="range range-xs range-primary"
+            />
+            <span class="text-xs tabular-nums w-8 text-right">{@settings[name]}</span>
+          </label>
+        </form>
       </div>
     </section>
     """

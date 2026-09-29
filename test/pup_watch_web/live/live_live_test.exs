@@ -8,7 +8,7 @@ defmodule PupWatchWeb.LiveLiveTest do
   test "clicks before the camera settings load don't crash the page", %{conn: conn} do
     {:ok, view, _} = live(conn, ~p"/")
     render_click(view, "setting", %{"name" => "led", "to" => "false"})
-    assert render(view) =~ "Camera settings unavailable"
+    assert render_async(view) =~ "Camera settings unavailable"
   end
 
   # LiveView lets an input's own `value` override phx-value-value, which is what
@@ -30,5 +30,6 @@ defmodule PupWatchWeb.LiveLiveTest do
     assert html =~ ~s(phx-value-to="off")
     refute html =~ "pet alerts"
     refute html =~ "phx-value-value"
+    refute html =~ "Siren"
   end
 end

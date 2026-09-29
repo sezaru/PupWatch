@@ -20,6 +20,18 @@ defmodule PupWatch.Camera.FeaturesTest do
       FakeCamera.start_link(fn reqs ->
         {:ok,
          Enum.map(reqs, fn
+           %{method: "getAppComponentList"} ->
+             %{
+               "error_code" => 0,
+               "result" => %{"app_component" => %{"app_component_list" => [%{"name" => "led"}]}}
+             }
+
+           %{method: "getLastAlarmInfo"} ->
+             %{
+               "error_code" => 0,
+               "result" => %{"msg_alarm" => %{"chn1_msg_alarm_info" => %{"enabled" => "off"}}}
+             }
+
            %{method: "getTargetTrackConfig"} ->
              %{
                "error_code" => 0,
@@ -45,8 +57,38 @@ defmodule PupWatch.Camera.FeaturesTest do
     assert settings.led == false
     assert settings.night_vision == "auto"
     assert settings.pet_detection == :unsupported
+    # the read answers, but without the msgAlarm module the camera can't act on it
+    assert settings.alarm == :unsupported
+    assert settings.siren == :unsupported
     assert [batch] = GenServer.call(cam, :seen)
-    assert length(batch) == length(Features.names())
+    assert length(batch) == length(Features.names()) + 1
+  end
+
+  test "alarm and siren are offered when the camera has the msgAlarm module" do
+    {:ok, cam} =
+      FakeCamera.start_link(fn reqs ->
+        {:ok,
+         Enum.map(reqs, fn
+           %{method: "getAppComponentList"} ->
+             %{
+               "error_code" => 0,
+               "result" => %{
+                 "app_component" => %{"app_component_list" => [%{"name" => "msgAlarm"}]}
+               }
+             }
+
+           %{method: "getLastAlarmInfo"} ->
+             %{
+               "error_code" => 0,
+               "result" => %{"msg_alarm" => %{"chn1_msg_alarm_info" => %{"enabled" => "on"}}}
+             }
+
+           _ ->
+             %{"error_code" => -40106}
+         end)}
+      end)
+
+    assert {:ok, %{alarm: true, siren: :available}} = Features.all(cam)
   end
 
   test "set/3 builds pytapo's payloads" do

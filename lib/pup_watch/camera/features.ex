@@ -16,19 +16,42 @@ defmodule PupWatch.Camera.Features do
 
   @night_modes ~w(auto on off)
 
+  @components %{
+    method: "getAppComponentList",
+    params: %{app_component: %{name: "app_component_list"}}
+  }
+
   def names, do: Map.keys(@toggles) ++ [:led, :night_vision, :alarm]
 
-  @doc "Every setting in one round-trip; the ones this camera lacks come back `:unsupported`."
+  @doc """
+  Every setting in one round-trip; the ones this camera lacks come back `:unsupported`.
+  `:siren` is `:available` or `:unsupported`.
+  """
   def all(server \\ Client) do
     reads = Enum.map(names(), &{&1, read(&1)})
+    requests = [@components | Enum.map(reads, &elem(&1, 1))]
 
-    with {:ok, responses} <- Client.request(server, Enum.map(reads, &elem(&1, 1))) do
+    with {:ok, [components | responses]} <- Client.request(server, requests) do
+      alarm? = has_alarm?(components)
+
+      settings =
+        reads
+        |> Enum.zip(responses)
+        |> Map.new(fn {{name, _}, resp} -> {name, parse(name, resp)} end)
+
+      # Firmware without the msgAlarm module still answers getLastAlarmInfo with
+      # placeholder defaults, but rejects every alarm write and siren command.
       {:ok,
-       reads
-       |> Enum.zip(responses)
-       |> Map.new(fn {{name, _}, resp} -> {name, parse(name, resp)} end)}
+       settings
+       |> Map.put(:alarm, if(alarm?, do: settings.alarm, else: :unsupported))
+       |> Map.put(:siren, if(alarm?, do: :available, else: :unsupported))}
     end
   end
+
+  defp has_alarm?(%{"result" => %{"app_component" => %{"app_component_list" => list}}}),
+    do: Enum.any?(list, &(&1["name"] == "msgAlarm"))
+
+  defp has_alarm?(_), do: false
 
   def set(server \\ Client, name, value) do
     with {:ok, request} <- write(name, value, server),

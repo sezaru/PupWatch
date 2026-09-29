@@ -40,7 +40,10 @@ if config_env() == :dev do
     ]
 end
 
-if host = System.get_env("CAMERA_HOST") do
+# tests must never reach the real camera, even with .env.snorlax loaded
+host = if config_env() != :test, do: System.get_env("CAMERA_HOST")
+
+if host do
   if password = System.get_env("TAPO_CLOUD_PASSWORD") do
     # the camera checks this locally; it never needs to reach TP-Link
     config :pup_watch, :tapo, host: host, password: password

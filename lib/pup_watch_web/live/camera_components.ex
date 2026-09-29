@@ -26,9 +26,9 @@ defmodule PupWatchWeb.CameraComponents do
         <div class="flex items-center justify-between">
           <h2 class="card-title text-base">Camera</h2>
           <button
+            :if={is_map(@settings) and @settings[:siren] == :available}
             type="button"
             phx-click="siren"
-            disabled={!is_map(@settings)}
             class={[
               "btn btn-sm",
               if(@siren, do: "btn-error animate-pulse", else: "btn-outline btn-error")

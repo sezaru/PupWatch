@@ -236,6 +236,10 @@ defmodule PupWatchWeb.LiveLive do
           <button type="button" data-stop class="btn btn-sm btn-error animate-pulse hidden">
             <span class="hero-speaker-x-mark size-4"></span> Stop alarm
           </button>
+          <label data-volume-box hidden class="flex items-center gap-2" title="Alarm volume">
+            <span class="hero-speaker-wave size-4 opacity-70"></span>
+            <input type="range" data-volume min="0" max="100" class="range range-xs w-24" />
+          </label>
           <button type="button" data-toggle class="btn btn-sm btn-soft">
             <span class="hero-bell-slash size-4"></span> Dog alarm off
           </button>

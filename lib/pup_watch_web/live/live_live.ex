@@ -158,6 +158,12 @@ defmodule PupWatchWeb.LiveLive do
   def handle_info({:detection, box}, socket),
     do: {:noreply, push_event(socket, "detection", %{box: box})}
 
+  def handle_info({:dog_arrived, _}, socket),
+    do: {:noreply, push_event(socket, "dog_arrived", %{})}
+
+  def handle_info({:dog_left, _}, socket),
+    do: {:noreply, push_event(socket, "dog_left", %{})}
+
   def handle_info(%Phoenix.Socket.Broadcast{topic: "recordings:all"}, socket),
     do: {:noreply, load_recent(socket)}
 
@@ -216,7 +222,7 @@ defmodule PupWatchWeb.LiveLive do
         </div>
       </div>
 
-      <div :if={@presets != []} class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2">
         <button
           :for={p <- @presets}
           type="button"
@@ -226,6 +232,14 @@ defmodule PupWatchWeb.LiveLive do
         >
           <.icon name="hero-map-pin" class="size-4" /> {p.name}
         </button>
+        <div id="dog-alarm" phx-hook="DogAlarm" phx-update="ignore" class="ml-auto flex gap-2">
+          <button type="button" data-stop class="btn btn-sm btn-error animate-pulse hidden">
+            <span class="hero-speaker-x-mark size-4"></span> Stop alarm
+          </button>
+          <button type="button" data-toggle class="btn btn-sm btn-soft">
+            <span class="hero-bell-slash size-4"></span> Dog alarm off
+          </button>
+        </div>
       </div>
 
       <.camera_settings settings={@settings} siren={@siren} />

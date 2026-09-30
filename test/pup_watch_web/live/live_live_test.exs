@@ -41,6 +41,15 @@ defmodule PupWatchWeb.LiveLiveTest do
     assert_push_event(view, "detection", %{box: nil})
   end
 
+  test "arrivals and departures reach the dog alarm", %{conn: conn} do
+    {:ok, view, html} = live(conn, ~p"/")
+    assert html =~ ~s(phx-hook="DogAlarm")
+    send(view.pid, {:dog_arrived, %{score: 0.9, thumbnail: nil}})
+    assert_push_event(view, "dog_arrived", %{})
+    send(view.pid, {:dog_left, 0.9})
+    assert_push_event(view, "dog_left", %{})
+  end
+
   test "volume sliders render from the camera's values" do
     html =
       render_component(&CameraComponents.camera_settings/1,

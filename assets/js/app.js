@@ -25,12 +25,13 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/pup_watch"
 import topbar from "../vendor/topbar"
 import {LiveVideo, Elapsed} from "./live_video"
+import {DogAlarm} from "./dog_alarm"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks, LiveVideo, Elapsed},
+  hooks: {...colocatedHooks, LiveVideo, Elapsed, DogAlarm},
 })
 
 // Show progress bar on live navigation and form submits

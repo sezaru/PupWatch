@@ -33,7 +33,7 @@ defmodule PupWatch.Detection.Detector do
     {:ok,
      %{
        net: Yolox.load(),
-       threshold: Keyword.get(opts, :threshold, 0.5),
+       detect_opts: Keyword.merge(Yolox.default_opts(), Keyword.take(opts, [:threshold])),
        presence: Presence.new(presence_opts),
        presence_opts: presence_opts,
        gate: Gate.new(Keyword.get(opts, :gate, [])),
@@ -80,7 +80,7 @@ defmodule PupWatch.Detection.Detector do
   end
 
   defp detect(mat, size, ts, s) do
-    best = s.net |> Yolox.detect(mat, threshold: s.threshold) |> List.first()
+    best = s.net |> Yolox.detect(mat, s.detect_opts) |> List.first()
     s = publish_box(s, best && normalize(best.box, size))
     {presence, event} = Presence.step(s.presence, ts, best)
 

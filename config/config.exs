@@ -19,7 +19,10 @@ config :pup_watch, :camera,
   go2rtc_stream: "tapo",
   go2rtc_mp4_stream: "tapo_mp4",
   detect_size: {640, 360},
-  detect_fps: 3
+  detect_fps: 2
+
+# YOLOX-s at 640: nano scored the (small, fluffy) Pomeranian 0.34, s@640 0.84.
+config :pup_watch, :model, file: "yolox_s.onnx", input: 640, threshold: 0.5
 
 config :pup_watch, :pipeline, true
 config :pup_watch, :time_zone, "America/Sao_Paulo"

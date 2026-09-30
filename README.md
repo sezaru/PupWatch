@@ -2,7 +2,7 @@
 
 Watches the balcony Tapo C200, records a clip whenever the dog is in frame, and serves a
 live page (WebRTC video, hold-to-talk, pan/tilt) plus a history of clips. Phoenix
-LiveView + Ash (AshSqlite); detection is YOLOX-nano through Evision's OpenCV DNN.
+LiveView + Ash (AshSqlite); detection is YOLOX-s through Evision's OpenCV DNN.
 
 Design: `docs/superpowers/specs/2026-09-29-pupwatch-v1-design.md`.
 
@@ -13,7 +13,7 @@ Code here, run on snorlax (x86, camera LAN):
     scripts/snorlax.sh mix test
     scripts/snorlax.sh bash scripts/e2e/run.sh   # fake camera + headless browser
 
-`scripts/fetch_model.sh` downloads `priv/models/yolox_nano.onnx` (gitignored).
+`scripts/fetch_model.sh` downloads `priv/models/yolox_s.onnx` (gitignored).
 
 ## Deploy
 

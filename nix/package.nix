@@ -32,8 +32,8 @@
   };
 
   model = fetchurl {
-    url = "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano.onnx";
-    sha256 = "c789161ed43c8269fcd4e67c67eeeb4e80c622da2eb296a20bc6007bd18a0b7d";
+    url = "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.onnx";
+    sha256 = "c5c2d13e59ae883e6af3b45daea64af4833a4951c92d116ec270d9ddbe998063";
   };
 in
   beamPackages.mixRelease {
@@ -49,7 +49,7 @@ in
       mkdir -p $XDG_CACHE_HOME
       cp ${evisionNif} $XDG_CACHE_HOME/${evisionNif.name}
       mkdir -p priv/models
-      cp ${model} priv/models/yolox_nano.onnx
+      cp ${model} priv/models/yolox_s.onnx
     '';
 
     postBuild = ''

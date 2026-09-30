@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 #
-# Fetch a nano YOLO object-detection model (ONNX, COCO 80 classes) for PupWatch.
+# Fetch the YOLOX object-detection model (ONNX, COCO 80 classes) for PupWatch.
 #
-# Default: YOLOX-nano, which is published as a ready-to-use .onnx directly on the
-# official Megvii YOLOX GitHub release (pinned tag 0.1.1rc0). The `yolo`
+# Default: YOLOX-s, which is published as a ready-to-use .onnx directly on the
+# official Megvii YOLOX GitHub release (pinned tag 0.1.1rc0). Nano was too weak
+# for a small fluffy dog (0.34 vs 0.84 for s at 640). The `yolo`
 # (yolo_elixir) library consumes it via its YoloX model module. COCO class 16 == "dog".
 #
 # Alternative (Ultralytics YOLOv8n / YOLO11n): Ultralytics ships only .pt weights,
@@ -17,12 +18,12 @@
 
 set -euo pipefail
 
-MODEL_URL="https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano.onnx"
-MODEL_SHA256="c789161ed43c8269fcd4e67c67eeeb4e80c622da2eb296a20bc6007bd18a0b7d"
+MODEL_URL="https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.onnx"
+MODEL_SHA256="c5c2d13e59ae883e6af3b45daea64af4833a4951c92d116ec270d9ddbe998063"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODELS_DIR="$SCRIPT_DIR/../priv/models"
-OUT="$MODELS_DIR/yolox_nano.onnx"
+OUT="$MODELS_DIR/yolox_s.onnx"
 
 mkdir -p "$MODELS_DIR"
 
@@ -31,7 +32,7 @@ if [ -f "$OUT" ] && echo "$MODEL_SHA256  $OUT" | sha256sum -c - >/dev/null 2>&1;
   exit 0
 fi
 
-echo "Downloading YOLOX-nano ONNX -> $OUT"
+echo "Downloading YOLOX-s ONNX -> $OUT"
 if ! curl -fL --retry 3 -o "$OUT" "$MODEL_URL"; then
   echo "ERROR: download failed from $MODEL_URL" >&2
   echo "Fetch it manually, or export an Ultralytics model (see header comment)." >&2

@@ -20,7 +20,7 @@ defmodule PupWatchWeb.LiveLive do
 
     {:ok,
      socket
-     |> assign(page_title: "Live", status: status.state, since: status.since)
+     |> assign(page_title: "PupWatch", status: status.state, since: status.since)
      |> assign(presets: if(connected?(socket), do: presets(), else: []))
      |> assign(settings: nil, siren: false)
      |> then(&if(connected?(&1), do: load_settings(&1), else: &1))

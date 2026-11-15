@@ -160,9 +160,9 @@ defmodule PupWatch.Camera.Features do
       end
 
     case value do
+      mode when name == :night_vision and mode in @night_modes -> mode
       "on" -> true
       "off" -> false
-      mode when name == :night_vision and mode in @night_modes -> mode
       volume when is_map_key(@volumes, name) and is_binary(volume) -> parse_volume(volume)
       _ -> :unsupported
     end

@@ -78,6 +78,24 @@ defmodule PupWatch.Camera.FeaturesTest do
     assert length(batch) == length(Features.names()) + 1
   end
 
+  test "night vision on and off stay modes, not toggles" do
+    for mode <- ~w(on off) do
+      {:ok, cam} =
+        FakeCamera.start_link(fn reqs ->
+          {:ok,
+           Enum.map(reqs, fn
+             %{method: "getLightFrequencyInfo"} ->
+               %{"error_code" => 0, "result" => %{"image" => %{"common" => %{"inf_type" => mode}}}}
+
+             _ ->
+               %{"error_code" => -40106}
+           end)}
+        end)
+
+      assert {:ok, %{night_vision: ^mode}} = Features.all(cam)
+    end
+  end
+
   test "alarm and siren are offered when the camera has the msgAlarm module" do
     {:ok, cam} =
       FakeCamera.start_link(fn reqs ->
